@@ -1,0 +1,1 @@
+<?php if(Auth::check()): ?></main></div><?php else: ?></main><?php endif; ?><script src="public/assets/js/app.js"></script></body></html>

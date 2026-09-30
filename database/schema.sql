@@ -1,0 +1,95 @@
+CREATE DATABASE IF NOT EXISTS cashly CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE cashly;
+
+CREATE TABLE users (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ email VARCHAR(150) NOT NULL UNIQUE,
+ password VARCHAR(255) NOT NULL,
+ role ENUM('user','admin') NOT NULL DEFAULT 'user',
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE transactions (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT UNSIGNED NOT NULL,
+ type ENUM('income','expense') NOT NULL,
+ amount DECIMAL(14,2) NOT NULL,
+ category VARCHAR(80) NOT NULL,
+ payment_method VARCHAR(60) NOT NULL,
+ date DATE NOT NULL,
+ description VARCHAR(255) NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_transactions_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+ INDEX idx_transactions_user_date(user_id,date)
+) ENGINE=InnoDB;
+
+CREATE TABLE savings_goals (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT UNSIGNED NOT NULL,
+ name VARCHAR(120) NOT NULL,
+ target_amount DECIMAL(14,2) NOT NULL,
+ initial_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+ deadline DATE NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_goals_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE goal_contributions (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ goal_id INT UNSIGNED NOT NULL,
+ amount DECIMAL(14,2) NOT NULL,
+ date DATE NOT NULL,
+ note VARCHAR(255) NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_contrib_goal FOREIGN KEY(goal_id) REFERENCES savings_goals(id) ON DELETE CASCADE,
+ INDEX idx_contrib_goal_date(goal_id,date)
+) ENGINE=InnoDB;
+
+CREATE TABLE budgets (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT UNSIGNED NOT NULL,
+ name VARCHAR(120) NOT NULL,
+ category VARCHAR(80) NOT NULL,
+ limit_amount DECIMAL(14,2) NOT NULL,
+ period ENUM('weekly','monthly','yearly') NOT NULL DEFAULT 'monthly',
+ initial_spent DECIMAL(14,2) NOT NULL DEFAULT 0,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_budgets_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE budget_expenses (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ budget_id INT UNSIGNED NOT NULL,
+ transaction_id INT UNSIGNED NULL,
+ amount DECIMAL(14,2) NOT NULL,
+ date DATE NOT NULL,
+ description VARCHAR(255) NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_budget_expense_budget FOREIGN KEY(budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
+ CONSTRAINT fk_budget_expense_transaction FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
+ INDEX idx_budget_expense_date(budget_id,date)
+) ENGINE=InnoDB;
+
+CREATE TABLE reminders (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT UNSIGNED NOT NULL,
+ title VARCHAR(150) NOT NULL,
+ event_date DATE NOT NULL,
+ amount DECIMAL(14,2) NULL,
+ kind ENUM('payment','subscription','other') NOT NULL DEFAULT 'payment',
+ notes VARCHAR(255) NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_reminders_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+ INDEX idx_reminders_user_date(user_id,event_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE password_resets (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT UNSIGNED NOT NULL,
+ token CHAR(64) NOT NULL UNIQUE,
+ expires_at DATETIME NOT NULL,
+ used TINYINT(1) NOT NULL DEFAULT 0,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_reset_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
