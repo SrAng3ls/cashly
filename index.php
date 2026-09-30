@@ -15,3 +15,4 @@ $routes=[
 ];
 if(!isset($routes[$url])){$url=Auth::check()?'dashboard':'login';}
 [$class,$method]=$routes[$url];(new $class())->$method();
+
