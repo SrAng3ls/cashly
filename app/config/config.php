@@ -18,3 +18,5 @@ if (session_status() === PHP_SESSION_NONE) {
 date_default_timezone_set('America/Bogota');
 
 // Configuración local de MySQL
+
+// Configuración local de MySQL
